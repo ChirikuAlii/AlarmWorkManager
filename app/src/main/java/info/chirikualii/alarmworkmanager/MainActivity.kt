@@ -5,11 +5,14 @@ import android.app.TimePickerDialog
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
+import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
 import kotlinx.android.synthetic.main.activity_main.*
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 class MainActivity : AppCompatActivity() {
 
@@ -21,8 +24,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupView() {
-        val request = OneTimeWorkRequest.Builder(MyWorker::class.java).build()
+
         val calendar = Calendar.getInstance()
+        var timemillisWork : Long = 0
+
+
 
         val dateFormatStr = "MM/dd/yy"
         val sdfDate = SimpleDateFormat(dateFormatStr)
@@ -66,16 +72,23 @@ class MainActivity : AppCompatActivity() {
                     }
 
                     val fullDate = "${sdfDate.format(calendar.time)}, ${convertHour}:${convertMinute}"
-                    val fullTimeMillis = sdfFullDate.parse(fullDate).time
+                    timemillisWork = sdfFullDate.parse(fullDate).time
 
                     Log.d(MainActivity::class.java.simpleName,"full date :${fullDate}")
-                    Log.d(MainActivity::class.java.simpleName,"timemillis :${fullTimeMillis}")
+                    Log.d(MainActivity::class.java.simpleName,"timemillis :${timemillisWork}")
                 }
                 ,hour,minute,true).show()
 
         }
         btn_worker.setOnClickListener {
-            WorkManager.getInstance(this).enqueue(request)
+            val delay = timemillisWork - System.currentTimeMillis()
+            val request = OneTimeWorkRequest.Builder(MyWorker::class.java)
+                .setInitialDelay(delay,TimeUnit.MILLISECONDS)
+                .build()
+            WorkManager.getInstance(this)
+                .beginUniqueWork("HeyWork",ExistingWorkPolicy.REPLACE,request)
+                .enqueue()
+            Toast.makeText(this,"worker successfully",Toast.LENGTH_SHORT).show()
         }
     }
 }
