@@ -4,9 +4,7 @@ import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.widget.DatePicker
-import android.widget.TimePicker
-import android.widget.Toast
+import android.util.Log
 import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
 import kotlinx.android.synthetic.main.activity_main.*
@@ -25,20 +23,20 @@ class MainActivity : AppCompatActivity() {
     private fun setupView() {
         val request = OneTimeWorkRequest.Builder(MyWorker::class.java).build()
         val calendar = Calendar.getInstance()
-        val dateFormat = "MM/dd/yy"
-        val sdf = SimpleDateFormat(dateFormat)
+
+        val dateFormatStr = "MM/dd/yy"
+        val sdfDate = SimpleDateFormat(dateFormatStr)
+
+        val fullDateFormatStr = "MM/dd/yy, hh:mm"
+        val sdfFullDate = SimpleDateFormat(fullDateFormatStr)
 
         val date = DatePickerDialog.OnDateSetListener { view, year, month, dayOfMonth ->
             calendar.set(Calendar.YEAR, year);
             calendar.set(Calendar.MONTH, month);
             calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
 
-            Toast.makeText(this,"date :${sdf.format(calendar.time)}",Toast.LENGTH_SHORT).show()
         }
 
-        val time = TimePickerDialog.OnTimeSetListener { view, hourOfDay, minute ->
-
-        }
 
         val datePicker = DatePickerDialog(this,date,calendar.get(Calendar.YEAR),calendar.get(Calendar.MONTH),calendar.get(Calendar.DAY_OF_MONTH))
 
@@ -52,25 +50,26 @@ class MainActivity : AppCompatActivity() {
             val minute = currentTime.get(Calendar.MINUTE)
             TimePickerDialog(this,
                 TimePickerDialog.OnTimeSetListener { view, hourOfDay, minute ->
-                    var hours =""
-                    var minutes = ""
-                    if(hourOfDay<=9 ){
-                        hours= "0${hourOfDay}"
+                    var convertHour =""
+                    var convertMinute = ""
 
-                    }else{
-                        hours = hourOfDay.toString()
-
+                    convertHour = if(hourOfDay<=9){
+                        "0${hourOfDay}"
+                    } else{
+                        hourOfDay.toString()
                     }
 
-                    if(minute<=9){
-                        minutes = "0${minute}"
+                    convertMinute = if(minute<=9){
+                        "0${minute}"
                     }else{
-
-                        minutes = minute.toString()
+                        minute.toString()
                     }
 
+                    val fullDate = "${sdfDate.format(calendar.time)}, ${convertHour}:${convertMinute}"
+                    val fullTimeMillis = sdfFullDate.parse(fullDate).time
 
-                    Toast.makeText(this@MainActivity,"date :${sdf.format(calendar.time)} ,time: ${hours}:${minutes}",Toast.LENGTH_SHORT).show()
+                    Log.d(MainActivity::class.java.simpleName,"full date :${fullDate}")
+                    Log.d(MainActivity::class.java.simpleName,"timemillis :${fullTimeMillis}")
                 }
                 ,hour,minute,true).show()
 
